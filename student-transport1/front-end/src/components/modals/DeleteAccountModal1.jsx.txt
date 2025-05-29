@@ -1,0 +1,74 @@
+import React, { useState } from 'react';
+import { Modal, Button } from 'react-bootstrap';
+
+const DeleteAccountModal = ({ 
+  show, 
+  onHide, 
+  onConfirm, 
+  userType = 'cuenta', // 'padre', 'admin' o genérico
+  additionalWarning = '' 
+}) => {
+  const [confirmationText, setConfirmationText] = useState('');
+
+  const getModalTitle = () => {
+    switch(userType) {
+      case 'parent': return 'Eliminar padre/madre';
+      case 'admin': return 'Eliminar administrador';
+      default: return 'Eliminar cuenta';
+    }
+  };
+
+  const getWarningMessage = () => {
+    let baseMessage = 'Esta acción no se puede deshacer. Todos los datos ';
+    
+    switch(userType) {
+      case 'parent':
+        baseMessage += 'del padre/madre y sus estudiantes asociados serán eliminados permanentemente.';
+        break;
+      case 'admin':
+        baseMessage += 'del administrador serán eliminados permanentemente.';
+        break;
+      default:
+        baseMessage += 'serán eliminados permanentemente.';
+    }
+    
+    return additionalWarning ? `${baseMessage} ${additionalWarning}` : baseMessage;
+  };
+
+  return (
+    <Modal show={show} onHide={onHide} centered>
+      <Modal.Header closeButton className="bg-danger text-white">
+        <Modal.Title>{getModalTitle()}</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <div className="text-center mb-4">
+          <i className="fas fa-exclamation-triangle text-danger fa-3x mb-3"></i>
+          <h4>¿Estás seguro?</h4>
+          <p>{getWarningMessage()}</p>
+        </div>
+        <div className="mb-3">
+          <label>Escribe "ELIMINAR" para confirmar</label>
+          <input
+            type="text"
+            className="form-control"
+            value={confirmationText}
+            onChange={(e) => setConfirmationText(e.target.value)}
+            placeholder="ELIMINAR"
+          />
+        </div>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="secondary" onClick={onHide}>Cancelar</Button>
+        <Button 
+          variant="danger" 
+          onClick={onConfirm}
+          disabled={confirmationText !== 'ELIMINAR'}
+        >
+          Confirmar eliminación
+        </Button>
+      </Modal.Footer>
+    </Modal>
+  );
+};
+
+export default DeleteAccountModal;
