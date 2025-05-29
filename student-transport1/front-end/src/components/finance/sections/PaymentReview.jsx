@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Badge, Form } from 'react-bootstrap';
 import ReceiptDetails from './ReceiptDetails';
-import ReceiptCommentModal from '../../modals/ReceiptCommentModal';
+import ReceiptCommentModal from '../modals/ReceiptCommentModal';
 
 const PaymentReview = () => {
   const [receipts, setReceipts] = useState([]);

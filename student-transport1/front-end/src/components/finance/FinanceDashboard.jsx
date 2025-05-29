@@ -1,7 +1,6 @@
-// src/components/finance/FinanceDashboard.jsx
 import React, { useState } from 'react';
-import FinanceSidebar    from './FinanceSidebar';
-import PaymentReview     from './sections/PaymentReview';
+import FinanceSidebar  from './FinanceSidebar';
+import PaymentReview   from './sections/PaymentReview';
 import '../../styles/FinanceDashboard.css';
 
 const FinanceDashboard = ({ onLogout }) => {
@@ -12,7 +11,7 @@ const FinanceDashboard = ({ onLogout }) => {
       <FinanceSidebar
         activeSection={activeSection}
         setActiveSection={setActiveSection}
-        onLogout={onLogout}               {/* <-- pasa el logout */}
+        onLogout={onLogout}
       />
       <div className="finance-main-content">
         {activeSection === 'payments' && <PaymentReview />}
