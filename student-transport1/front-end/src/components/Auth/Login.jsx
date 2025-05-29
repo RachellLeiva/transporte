@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { api } from '../../api';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBus, faEnvelope, faLock } from '@fortawesome/free-solid-svg-icons';
+
 
 const Login = ({ onLogin, onShowRegister, onShowForgotPassword }) => {
   const [email, setEmail] = useState('');
@@ -18,12 +21,16 @@ const Login = ({ onLogin, onShowRegister, onShowForgotPassword }) => {
   };
 
   return (
-    <div className="auth-form">
-      <div className="auth-icon"><i className="fas fa-bus"></i></div>
+    <div className="auth-wrapper">
+      <div className="auth-container">
+        <div className="auth-header">
+        <FontAwesomeIcon icon={faBus} size="sm" className="auth-icon" />
       <h1>Transporte Escolar</h1>
       <p className="subtitle">Inicia sesión para continuar</p>
+      </div>
       <form onSubmit={handleSubmit}>
-        <div className="form-group">
+        <div className="input-with-icon">
+          <FontAwesomeIcon icon={faEnvelope} className="input-icon"/>
           <label>Correo electrónico</label>
           <input
             type="email"
@@ -33,7 +40,9 @@ const Login = ({ onLogin, onShowRegister, onShowForgotPassword }) => {
             required
           />
         </div>
-        <div className="form-group">
+
+        <div className="input-with-icon">
+          <FontAwesomeIcon icon={faLock} className="input-icon"/>
           <label>Contraseña</label>
           <input
             type="password"
@@ -43,6 +52,7 @@ const Login = ({ onLogin, onShowRegister, onShowForgotPassword }) => {
             required
           />
         </div>
+
         <div className="remember-forgot">
           <label className="remember-me">
             <input
@@ -69,6 +79,7 @@ const Login = ({ onLogin, onShowRegister, onShowForgotPassword }) => {
           Regístrate
         </button>
       </p>
+    </div>
     </div>
   );
 };

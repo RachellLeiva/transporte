@@ -36,7 +36,9 @@
 .admin-dashboard {
   display: flex;
   min-height: 100vh;
-  background-color: #f5f5f5;
+  width: 100vw; /* Ocupa todo el ancho de la ventana */
+  overflow-x: hidden; /* Evita scroll horizontal */
+  background-color: #f8f9fa;
 }
 
 .admin-sidebar {

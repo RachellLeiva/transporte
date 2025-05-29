@@ -22,21 +22,12 @@
   margin-bottom: 0.5rem;
 }
 .subtitle {
-  color: #666;
+  color: #f7f4f4;
   text-align: center;
   margin-bottom: 2rem;
 }
-.auth-icon {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 20px;
-  background-color: #f0f0f0;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.auth-icon i { font-size: 36px; color: #4a90e2; }
+
+
 .form-group { margin-bottom: 1.5rem; }
 .form-group label { display: block; margin-bottom: 0.5rem; color: #333; }
 .form-group input { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; }
@@ -48,3 +39,202 @@
 .auth-button { width: 100%; padding: 0.75rem; background-color: #4a90e2; color: white; border: none; border-radius: 5px; cursor: pointer; }
 .auth-switch { text-align: center; color: #666; }
 .auth-switch button { background: none; border: none; color: #4a90e2; }
+
+/* ===== ESTILOS BASE ===== */
+.auth-global-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  padding: 20px;
+  font-family: 'Arial', sans-serif;
+}
+
+.auth-container {
+  width: 100%;
+  max-width: 450px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+/* ===== CABECERA ===== */
+.auth-header {
+  text-align: center;
+  padding: 25px;
+  background: #4a90e2;
+  color: white;
+}
+
+.auth-header h1 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.auth-header .subtitle {
+  margin: 8px 0 0;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* ===== ICONOS ===== */
+.auth-icon {
+  color: white;
+  margin-bottom: 15px;
+  font-size: 2rem; /* Tamaño mediano - ajusta según necesites */
+}
+
+/* ===== CUERPO DEL FORMULARIO ===== */
+.auth-body {
+  padding: 25px;
+}
+
+/* Grupos de formulario */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #333;
+}
+
+.form-control {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.form-control:focus {
+  border-color: #4a90e2;
+  outline: none;
+}
+
+/* Checkbox */
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.checkbox-group input {
+  margin-right: 10px;
+}
+
+/* ===== BOTONES ===== */
+.btn {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.3s;
+}
+
+.btn-primary {
+  background-color: #4a90e2;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #3a7bc8;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: #4a90e2;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  font-size: inherit;
+}
+
+/* ===== MENSAJES ===== */
+.message {
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.message-error {
+  background-color: #fdecea;
+  color: #e74c3c;
+}
+
+.message-success {
+  background-color: #e8f8f0;
+  color: #2ecc71;
+}
+
+/* ===== PIE DE FORMULARIO ===== */
+.auth-footer {
+  text-align: center;
+  margin-top: 20px;
+  color: #666;
+}
+
+/* ===== INPUTS CON ICONOS ===== */
+.input-with-icon {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.input-with-icon .icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #4a90e2;
+  font-size: 1rem; /* Tamaño pequeño para iconos dentro de inputs */
+}
+
+.input-with-icon input {
+  width: 100%;
+  padding: 12px 15px 12px 40px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* Estilos para inputs con iconos */
+.input-with-icon {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.input-with-icon .input-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #4a90e2;
+  font-size: 1rem;
+  z-index: 2;
+}
+
+.input-with-icon input {
+  width: 100%;
+  padding: 12px 15px 12px 45px; /* Aumenta el padding izquierdo */
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  position: relative;
+}
+
+.input-with-icon input:focus {
+  border-color: #4a90e2;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}

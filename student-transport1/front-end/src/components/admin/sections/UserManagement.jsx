@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Badge, Alert } from 'react-bootstrap';
+import { api } from '../../../api'; 
 import EditUserModal from '../modals/EditUserModal';
 import AssignStudentModal from '../modals/AssignStudentModal';
 import DeleteAccountModal from '../../modals/DeleteAccountModal';
@@ -12,88 +13,89 @@ const UserManagement = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [alert, setAlert] = useState({ show: false, message: '', variant: 'success' });
+  const [loading, setLoading] = useState(true);
 
-  // Datos de ejemplo - en una app real estos vendrían de una API
+  // Obtener usuarios y estudiantes de la API
   useEffect(() => {
-    const mockUsers = [
-      { 
-        id: 1, 
-        name: 'Admin Principal', 
-        email: 'admin@escuela.com', 
-        role: 'admin',
-        phone: '',
-        address: ''
-      },
-      { 
-        id: 2, 
-        name: 'Juan Pérez', 
-        email: 'juan@email.com', 
-        role: 'parent',
-        phone: '555-1234',
-        address: 'Calle 123, Colonia Centro'
+    const fetchData = async () => {
+      try {
+        const [usersRes, studentsRes] = await Promise.all([
+          api.get('/users'),
+          api.get('/students')
+        ]);
+        setUsers(usersRes.data);
+        setStudents(studentsRes.data);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setAlert({ show: true, message: 'Error al cargar los datos', variant: 'danger' });
+      } finally {
+        setLoading(false);
       }
-    ];
+    };
 
-    const mockStudents = [
-      {
-        id: 101,
-        name: 'María Pérez',
-        grade: '5to grado',
-        parentId: 2,
-        parentName: 'Juan Pérez'
-      }
-    ];
-
-    setUsers(mockUsers);
-    setStudents(mockStudents);
+    fetchData();
   }, []);
 
-  const handleSaveUser = (userData) => {
-    if (userData.id) {
-      // Editar usuario existente
-      setUsers(users.map(u => u.id === userData.id ? userData : u));
-      setAlert({ show: true, message: 'Usuario actualizado correctamente', variant: 'success' });
-    } else {
-      // Agregar nuevo usuario
-      const newUser = {
-        ...userData,
-        id: Date.now(), // ID temporal
-        phone: '',
-        address: ''
-      };
-      setUsers([...users, newUser]);
-      setAlert({ show: true, message: 'Usuario creado correctamente', variant: 'success' });
+  const handleSaveUser = async (userData) => {
+    try {
+      let response;
+      if (userData._id) {
+        // Editar usuario existente
+        response = await api.put(`/users/${userData._id}`, userData);
+        setUsers(users.map(u => u._id === userData._id ? response.data : u));
+        setAlert({ show: true, message: 'Usuario actualizado correctamente', variant: 'success' });
+      } else {
+        // Crear nuevo usuario
+        response = await api.post('/users', userData);
+        setUsers([...users, response.data]);
+        setAlert({ show: true, message: 'Usuario creado correctamente', variant: 'success' });
+      }
+      setShowEditModal(false);
+    } catch (error) {
+      console.error('Error saving user:', error);
+      setAlert({ show: true, message: 'Error al guardar el usuario', variant: 'danger' });
     }
-    setShowEditModal(false);
   };
 
-  const handleDeleteUser = (userId) => {
-    setUsers(users.filter(u => u.id !== userId));
-    // También eliminar estudiantes asociados si es un padre
-    setStudents(students.filter(s => s.parentId !== userId));
-    setShowDeleteModal(false);
-    setAlert({ show: true, message: 'Usuario eliminado correctamente', variant: 'danger' });
+  const handleDeleteUser = async (userId) => {
+    try {
+      await api.delete(`/users/${userId}`);
+      setUsers(users.filter(u => u._id !== userId));
+      // También eliminar estudiantes asociados si es un padre
+      setStudents(students.filter(s => s.parentId !== userId));
+      setShowDeleteModal(false);
+      setAlert({ show: true, message: 'Usuario eliminado correctamente', variant: 'danger' });
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      setAlert({ show: true, message: 'Error al eliminar el usuario', variant: 'danger' });
+    }
   };
 
-  const handleAssignStudent = (studentData) => {
-    if (studentData.id) {
-      // Editar estudiante existente
-      setStudents(students.map(s => s.id === studentData.id ? studentData : s));
-    } else {
-      // Agregar nuevo estudiante
-      const newStudent = {
-        ...studentData,
-        id: Date.now() // ID temporal
-      };
-      setStudents([...students, newStudent]);
+  const handleAssignStudent = async (studentData) => {
+    try {
+      let response;
+      if (studentData._id) {
+        // Editar estudiante existente
+        response = await api.put(`/students/${studentData._id}`, studentData);
+        setStudents(students.map(s => s._id === studentData._id ? response.data : s));
+      } else {
+        // Crear nuevo estudiante
+        response = await api.post('/students', studentData);
+        setStudents([...students, response.data]);
+      }
+      setShowAssignModal(false);
+      setAlert({ show: true, message: 'Estudiante asignado/actualizado', variant: 'success' });
+    } catch (error) {
+      console.error('Error assigning student:', error);
+      setAlert({ show: true, message: 'Error al asignar estudiante', variant: 'danger' });
     }
-    setShowAssignModal(false);
-    setAlert({ show: true, message: 'Estudiante asignado/actualizado', variant: 'success' });
   };
 
   const getUserStudents = (userId) => {
     return students.filter(s => s.parentId === userId);
   };
+
+  if (loading) return <div>Cargando...</div>;
 
   return (
     <div className="user-management">
@@ -135,7 +137,7 @@ const UserManagement = () => {
         </thead>
         <tbody>
           {users.map(user => (
-            <React.Fragment key={user.id}>
+            <React.Fragment key={user._id}>
               <tr>
                 <td>{user.name}</td>
                 <td>{user.email}</td>
@@ -146,10 +148,10 @@ const UserManagement = () => {
                 </td>
                 <td>{user.phone || 'No especificado'}</td>
                 <td>
-                  {getUserStudents(user.id).length > 0 ? (
+                  {getUserStudents(user._id).length > 0 ? (
                     <ul>
-                      {getUserStudents(user.id).map(student => (
-                        <li key={student.id}>
+                      {getUserStudents(user._id).map(student => (
+                        <li key={student._id}>
                           {student.name} ({student.grade})
                         </li>
                       ))}
@@ -177,7 +179,7 @@ const UserManagement = () => {
                           setShowAssignModal(true);
                         }}
                       >
-                        {getUserStudents(user.id).length > 0 ? 'Administrar' : 'Asignar'} Estudiante
+                        {getUserStudents(user._id).length > 0 ? 'Administrar' : 'Asignar'} Estudiante
                       </Button>
                     )}
                     <Button 
@@ -210,16 +212,16 @@ const UserManagement = () => {
         show={showAssignModal}
         onHide={() => setShowAssignModal(false)}
         parent={selectedUser}
-        students={getUserStudents(selectedUser?.id)}
+        students={getUserStudents(selectedUser?._id)}
         onSave={handleAssignStudent}
       />
 
       <DeleteAccountModal
         show={showDeleteModal}
         onHide={() => setShowDeleteModal(false)}
-        onDelete={handleDeleteUser}
+        onDelete={() => handleDeleteUser(selectedUser._id)}
         userType={selectedUser?.role === 'parent' ? 'parent' : 'admin'}
-        additionalWarning={selectedUser?.role === 'parent' && getUserStudents(selectedUser.id).length > 0 
+        additionalWarning={selectedUser?.role === 'parent' && getUserStudents(selectedUser._id).length > 0 
           ? 'Esto afectará a los estudiantes asociados.' 
           : ''}
       />
