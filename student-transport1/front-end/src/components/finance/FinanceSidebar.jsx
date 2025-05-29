@@ -1,3 +1,4 @@
+// front-end/src/components/finance/FinanceSidebar.jsx
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faReceipt, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
@@ -28,4 +29,3 @@ const FinanceSidebar = ({ activeSection, setActiveSection, onLogout }) => {
 };
 
 export default FinanceSidebar;
-
