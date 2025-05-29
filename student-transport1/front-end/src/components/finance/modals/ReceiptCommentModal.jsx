@@ -1,3 +1,4 @@
+// front-end/src/components/finance/modals/ReceiptCommentModal.jsx
 import React, { useState } from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
 
@@ -6,14 +7,14 @@ const ReceiptCommentModal = ({ show, onHide, receipt, onSave }) => {
 
   const handleSubmit = () => {
     onSave(comment);
-    onHide();
     setComment('');
+    onHide();
   };
 
   return (
     <Modal show={show} onHide={onHide} centered>
       <Modal.Header closeButton>
-        <Modal.Title>Comentario para el comprobante #{receipt?.id}</Modal.Title>
+        <Modal.Title>Comentario de Rechazo #{receipt?._id}</Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <Form.Group>
@@ -22,16 +23,14 @@ const ReceiptCommentModal = ({ show, onHide, receipt, onSave }) => {
             as="textarea"
             rows={3}
             value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder="Explica por qué se rechaza este comprobante..."
+            onChange={e => setComment(e.target.value)}
+            placeholder="Explica por qué rechazas este comprobante..."
           />
         </Form.Group>
       </Modal.Body>
       <Modal.Footer>
         <Button variant="secondary" onClick={onHide}>Cancelar</Button>
-        <Button variant="danger" onClick={handleSubmit}>
-          Rechazar con comentario
-        </Button>
+        <Button variant="danger" onClick={handleSubmit}>Rechazar</Button>
       </Modal.Footer>
     </Modal>
   );
