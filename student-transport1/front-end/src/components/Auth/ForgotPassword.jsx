@@ -1,33 +1,66 @@
+// src/components/Auth/ForgotPassword.jsx
 import React, { useState } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEnvelope } from '@fortawesome/free-solid-svg-icons';
 import { api } from '../../api';
 
 const ForgotPassword = ({ onBackToLogin }) => {
   const [email, setEmail] = useState('');
+  const [error, setError] = useState('');
+  const [tempPassword, setTempPassword] = useState('');
 
   const handleSubmit = async e => {
     e.preventDefault();
+    setError('');
+    setTempPassword('');
     try {
-      await api.post('/auth/forgot-password', { email });
-      alert(`Enlace enviado a ${email}`);
-      onBackToLogin();
-    } catch {
-      alert('Error al enviar enlace');
+      // Asumimos que tu endpoint devuelve { tempPassword: '...' }
+      const { data } = await api.post('/auth/forgot-password', { email });
+      setTempPassword(data.tempPassword);
+    } catch (err) {
+      setError(err.response?.data?.msg || 'Error al generar contraseña');
     }
   };
 
   return (
-    <div className="auth-form">
-      <div className="auth-icon"><i className="fas fa-key"></i></div>
-      <h1>Recuperar contraseña</h1>
-      <p className="subtitle">Envía un enlace a tu correo</p>
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Correo electrónico</label>
-          <input type="email" placeholder="correo@ejemplo.com" value={email} onChange={e=>setEmail(e.target.value)} required />
+    <div className="auth-wrapper">
+      <div className="auth-container">
+        <div className="auth-header">
+          <FontAwesomeIcon icon={faEnvelope} size="3x" className="auth-icon" />
+          <h1>Recuperar contraseña</h1>
+          <p className="subtitle">Se generará una contraseña temporal</p>
         </div>
-        <button type="submit" className="auth-button">Enviar enlace</button>
-      </form>
-      <p className="auth-switch"><button onClick={onBackToLogin}>Volver al login</button></p>
+
+        <form onSubmit={handleSubmit}>
+          <div className="input-with-icon">
+            <FontAwesomeIcon icon={faEnvelope} className="input-icon" />
+            <input
+              type="email"
+              placeholder="correo@ejemplo.com"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          <button type="submit" className="auth-button">
+            Generar contraseña temporal
+          </button>
+        </form>
+
+        {error && <div className="error-message">{error}</div>}
+
+        {tempPassword && (
+          <div className="temp-password">
+            <p>
+              Tu contraseña temporal es: <strong>{tempPassword}</strong>
+            </p>
+          </div>
+        )}
+
+        <p className="auth-switch">
+          <button onClick={onBackToLogin}>Volver al login</button>
+        </p>
+      </div>
     </div>
   );
 };

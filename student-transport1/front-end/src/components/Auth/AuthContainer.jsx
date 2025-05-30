@@ -8,7 +8,8 @@ const AuthContainer = ({ onLogin }) => {
   const [activeForm, setActiveForm] = useState('login');
 
   return (
-    <div className="auth-container">
+      <div className="auth-global-container">
+      <div className="auth-content-wrapper"></div>
       {activeForm === 'login' && (
         <Login
           onLogin={onLogin}
