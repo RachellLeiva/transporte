@@ -1,21 +1,19 @@
 import React, { useState } from 'react';
-import { api }              from './api';
-import AuthContainer        from './components/Auth/AuthContainer';
-import ParentDashboard      from './components/parent/ParentDashboard';
-import AdminDashboard       from './components/admin/AdminDashboard';
-import FinanceDashboard     from './components/finance/FinanceDashboard';
+import { Routes, Route } from 'react-router-dom';
+import { api }           from './api';
+import AuthContainer     from './components/Auth/AuthContainer';
+import ForgotPassword    from './components/Auth/ForgotPassword';
+import ResetPassword     from './components/Auth/ResetPassword';
+import ParentDashboard   from './components/parent/ParentDashboard';
+import AdminDashboard    from './components/admin/AdminDashboard';
+import FinanceDashboard  from './components/finance/FinanceDashboard';
 
 function App() {
   const [user, setUser] = useState(null);
 
-  // Se llama tras login exitoso en AuthContainer
   const handleLogin = async () => {
-    try {
-      const res = await api.get('/auth/me');
-      setUser(res.data);
-    } catch (err) {
-      console.error('Error obteniendo usuario:', err);
-    }
+    const res = await api.get('/auth/me');
+    setUser(res.data);
   };
 
   const handleLogout = () => {
@@ -24,17 +22,21 @@ function App() {
   };
 
   return (
-    <div className="app">
+    <Routes>
       {!user ? (
-        <AuthContainer onLogin={handleLogin} />
+        <>
+          <Route path="/" element={<AuthContainer onLogin={handleLogin} />} />
+          <Route path="/forgot-password" element={<ForgotPassword onBackToLogin={()=>{}} />} />
+          <Route path="/reset-password/:resetToken" element={<ResetPassword />} />
+        </>
       ) : user.role === 'admin' ? (
-        <AdminDashboard onLogout={handleLogout} />
+        <Route path="/*" element={<AdminDashboard onLogout={handleLogout} />} />
       ) : user.role === 'finance' ? (
-        <FinanceDashboard onLogout={handleLogout} />
+        <Route path="/*" element={<FinanceDashboard onLogout={handleLogout} />} />
       ) : (
-        <ParentDashboard onLogout={handleLogout} />
+        <Route path="/*" element={<ParentDashboard onLogout={handleLogout} />} />
       )}
-    </div>
+    </Routes>
   );
 }
 

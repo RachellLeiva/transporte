@@ -1,5 +1,5 @@
 // back-end/models/User.js
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
 const UserSchema = new mongoose.Schema({
   name:     { type: String, required: true },
@@ -20,7 +20,10 @@ const UserSchema = new mongoose.Schema({
   amount: {
     type: Number,
     default: 120
-  }
-}, { timestamps: true })
+  },
+  // ** NUEVOS CAMPOS **
+  resetPasswordToken:  String,
+  resetPasswordExpire: Date
+}, { timestamps: true });
 
-module.exports = mongoose.model('User', UserSchema)
+module.exports = mongoose.model('User', UserSchema);
