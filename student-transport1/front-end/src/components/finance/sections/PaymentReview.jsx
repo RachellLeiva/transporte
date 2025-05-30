@@ -2,129 +2,156 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Badge, Form } from 'react-bootstrap';
 import { api } from '../../../api';
-import ReceiptDetails from './ReceiptDetails';
 
-const months = [
+const MONTHS = [
   'Enero','Febrero','Marzo','Abril','Mayo','Junio',
   'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'
 ];
 
-export default function PaymentReview() {
-  const [parents, setParents]           = useState([]);
-  const [studentMap, setStudentMap]     = useState({});
-  const [receipts, setReceipts]         = useState([]);
-  const [year, setYear]                 = useState(new Date().getFullYear());
-  const [month, setMonth]               = useState(new Date().getMonth() + 1);
-  const [selectedReceipt, setSelectedReceipt] = useState(null);
-  const [showDetails, setShowDetails]   = useState(false);
+const PaymentReview = () => {
+  const [parents, setParents] = useState([]);
+  const [receipts, setReceipts] = useState([]);
+  const [year, setYear]       = useState(new Date().getFullYear());
+  const [month, setMonth]     = useState(new Date().getMonth()+1);
 
+  // Carga padres y comprobantes al montar y al cambiar year/month
   useEffect(() => {
-    const fetchAll = async () => {
+    const fetchData = async () => {
       try {
-        const [{ data: ps }, { data: studs }, { data: recs }] = await Promise.all([
+        const [uRes, rRes] = await Promise.all([
           api.get('/users'),
-          api.get('/students'),
-          api.get(`/receipts?year=${year}&month=${month}`)
+          api.get('/receipts', { params: { year, month } })
         ]);
-        setParents(ps);
-
-        const map = {};
-        studs.forEach(s => {
-          if (!map[s.parent]) map[s.parent] = [];
-          map[s.parent].push(s.name);
-        });
-        setStudentMap(map);
-
-        setReceipts(recs);
+        setParents(uRes.data);
+        setReceipts(rRes.data);
       } catch (err) {
-        console.error('Error cargando datos:', err);
+        console.error('Error cargando datos de Finanzas:', err);
       }
     };
-    fetchAll();
+    fetchData();
   }, [year, month]);
 
-  const handleStatus = async (id, status) => {
-    try {
-      const { data: updated } = await api.put(`/receipts/${id}/status`, { status });
-      setReceipts(rs => rs.map(r => r._id === id ? updated : r));
-    } catch (err) {
-      console.error('Error actualizando estado:', err);
-    }
+  // Mapea cada padre a su comprobante (si existe)
+  const rows = parents.map(parent => {
+    const rec = receipts.find(r => r.parent._id === parent._id);
+    return {
+      parent,
+      receipt: rec || null
+    };
+  });
+
+  const handleApprove = id => {
+    setReceipts(rs =>
+      rs.map(r => r._id === id ? { ...r, status: 'approved' } : r)
+    );
+    // aquí podrías llamar: api.put(`/receipts/${id}`,{status:'approved'})
+  };
+
+  const handleReject = id => {
+    setReceipts(rs =>
+      rs.map(r => r._id === id ? { ...r, status: 'rejected' } : r)
+    );
+    // o mostrar modal de comentario...
+  };
+
+  const handleNotify = parentId => {
+    api.post('/notifications', { parentId, year, month })
+      .then(() => alert('Correo enviado'))
+      .catch(() => alert('Error enviando correo'));
   };
 
   return (
-    <div className="payment-review">
-      <div className="d-flex justify-content-between mb-4">
-        <h2>Revisión Mensual por Padre</h2>
-        <div className="d-flex gap-2">
-          <Form.Select value={year} onChange={e => setYear(+e.target.value)}>
-            {[2025, 2024, 2023].map(y => <option key={y} value={y}>{y}</option>)}
-          </Form.Select>
-          <Form.Select value={month} onChange={e => setMonth(+e.target.value)}>
-            {months.map((m, i) => (
-              <option key={i} value={i + 1}>{m}</option>
+    <div className="finance-payment-review">
+      <h2>Revisión de Comprobantes</h2>
+
+      <div className="d-flex gap-3 align-items-end mb-4">
+        <Form.Group>
+          <Form.Label>Año</Form.Label>
+          <Form.Select value={year} onChange={e=>setYear(+e.target.value)}>
+            {[2025,2024,2023].map(y=>(
+              <option key={y} value={y}>{y}</option>
             ))}
           </Form.Select>
-        </div>
+        </Form.Group>
+
+        <Form.Group>
+          <Form.Label>Mes</Form.Label>
+          <Form.Select value={month} onChange={e=>setMonth(+e.target.value)}>
+            {MONTHS.map((m,i)=>(
+              <option key={m} value={i+1}>{m}</option>
+            ))}
+          </Form.Select>
+        </Form.Group>
       </div>
 
       <Table striped bordered hover>
         <thead>
           <tr>
-            <th>Padre</th>
+            <th>Padre/Madre</th>
             <th>Teléfono</th>
-            <th>Estudiantes</th>
-            <th>Periodo</th>
             <th>Estado</th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
-          {parents.map(p => {
-            const rec = receipts.find(r =>
-              r.parent._id === p._id && r.month === month
-            );
+          {rows.map(({ parent, receipt }) => {
+            const status = receipt
+              ? receipt.status === 'pending'  ? 'Sin revisar'
+              : receipt.status === 'approved' ? 'Aprobado'
+              : /* rejected */                 'Rechazado'
+              : 'Sin comprobante';
+
             return (
-              <tr key={p._id}>
-                <td>{p.name}</td>
-                <td>{p.phone || '—'}</td>
-                <td>{(studentMap[p._id] || []).join(', ') || '—'}</td>
-                <td>{`${months[month - 1]} ${year}`}</td>
+              <tr key={parent._id}>
+                <td>{parent.name}</td>
+                <td>{parent.phone || '–'}</td>
                 <td>
-                  {rec
-                    ? rec.status === 'approved' ? 'Aprobado'
-                      : rec.status === 'pending'  ? 'Pendiente'
-                      : 'Rechazado'
-                    : 'No hay'}
+                  <Badge
+                    bg={
+                      status === 'Aprobado'    ? 'success' :
+                      status === 'Rechazado'   ? 'danger' :
+                      status === 'Sin revisar' ? 'warning' : 'secondary'
+                    }
+                  >
+                    {status}
+                  </Badge>
                 </td>
-                <td className="d-flex gap-2">
-                  {rec ? (
+                <td>
+                  {receipt ? (
                     <>
-                      <Button size="sm" onClick={() => {
-                        setSelectedReceipt(rec);
-                        setShowDetails(true);
-                      }}>
+                      <Button
+                        size="sm"
+                        className="me-2"
+                        onClick={()=>window.open(receipt.fileUrl,'_blank')}
+                      >
                         Ver
                       </Button>
                       <Button
                         size="sm"
                         variant="success"
-                        disabled={rec.status === 'approved'}
-                        onClick={() => handleStatus(rec._id, 'approved')}
+                        className="me-2"
+                        disabled={receipt.status==='approved'}
+                        onClick={()=>handleApprove(receipt._id)}
                       >
                         Aprobar
                       </Button>
                       <Button
                         size="sm"
                         variant="danger"
-                        disabled={rec.status === 'rejected'}
-                        onClick={() => handleStatus(rec._id, 'rejected')}
+                        disabled={receipt.status==='rejected'}
+                        onClick={()=>handleReject(receipt._id)}
                       >
                         Rechazar
                       </Button>
                     </>
                   ) : (
-                    <span>—</span>
+                    <Button
+                      size="sm"
+                      variant="info"
+                      onClick={()=>handleNotify(parent._id)}
+                    >
+                      Notificar por correo
+                    </Button>
                   )}
                 </td>
               </tr>
@@ -132,12 +159,8 @@ export default function PaymentReview() {
           })}
         </tbody>
       </Table>
-
-      <ReceiptDetails
-        show={showDetails}
-        onHide={() => setShowDetails(false)}
-        receipt={selectedReceipt}
-      />
     </div>
   );
-}
+};
+
+export default PaymentReview;
