@@ -1,154 +1,192 @@
-import React, { useState, useEffect } from 'react';
-import { Table, Form, Badge } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react'
+import { Table, Button, Badge, Form, Row, Col, Spinner } from 'react-bootstrap'
+import { api } from '../../../api'
 
 const PaymentReview = () => {
-  const [payments, setPayments] = useState([]);
+  const [receipts, setReceipts] = useState([])
+  const [loading, setLoading] = useState(false)
   const [filter, setFilter] = useState({
-    date: '',
+    year: new Date().getFullYear().toString(),
+    month: (new Date().getMonth() + 1).toString(),
     parent: '',
     student: '',
     status: 'all'
-  });
+  })
+
+  const years = ['2025','2024','2023']
+  const months = [
+    { val: '1', name: 'Enero' }, { val: '2', name: 'Febrero' },
+    { val: '3', name: 'Marzo' }, { val: '4', name: 'Abril' },
+    { val: '5', name: 'Mayo' }, { val: '6', name: 'Junio' },
+    { val: '7', name: 'Julio' }, { val: '8', name: 'Agosto' },
+    { val: '9', name: 'Septiembre' }, { val: '10', name: 'Octubre' },
+    { val: '11', name: 'Noviembre' }, { val: '12', name: 'Diciembre' }
+  ]
+  const statuses = [
+    { val: 'all', label: 'Todos' },
+    { val: 'approved', label: 'Aprobados' },
+    { val: 'pending',  label: 'Pendientes' },
+    { val: 'rejected', label: 'Rechazados' }
+  ]
 
   useEffect(() => {
-    // Datos de ejemplo
-    const mockPayments = [
-      {
-        id: 1,
-        date: '2025-05-15',
-        parent: 'Juan Pérez',
-        student: 'María Pérez',
-        amount: 120,
-        type: 'both',
-        status: 'approved',
-        file: 'comprobante1.pdf'
-      },
-      {
-        id: 2,
-        date: '2025-05-10',
-        parent: 'Ana López',
-        student: 'Carlos López',
-        amount: 80,
-        type: 'pickup',
-        status: 'pending',
-        file: 'comprobante2.jpg'
+    const load = async () => {
+      setLoading(true)
+      try {
+        const { data } = await api.get('/receipts', {
+          params: { year: filter.year, month: filter.month }
+        })
+        setReceipts(data)
+      } catch (err) {
+        console.error('Error cargando comprobantes:', err)
       }
-    ];
-    setPayments(mockPayments);
-  }, []);
+      setLoading(false)
+    }
+    load()
+  }, [filter.year, filter.month])
 
-  const filteredPayments = payments.filter(payment => {
-    return (
-      (filter.date === '' || payment.date.includes(filter.date)) &&
-      (filter.parent === '' || payment.parent.includes(filter.parent)) &&
-      (filter.student === '' || payment.student.includes(filter.student)) &&
-      (filter.status === 'all' || payment.status === filter.status)
-    );
-  });
+  const displayed = receipts.filter(r => {
+    const byParent  = filter.parent  === '' || r.parent.name.toLowerCase().includes(filter.parent.toLowerCase())
+    const byStud    = filter.student === '' || r.studentNames.some(n => n.toLowerCase().includes(filter.student.toLowerCase()))
+    const byStatus  = filter.status  === 'all'   || r.status === filter.status
+    return byParent && byStud && byStatus
+  })
 
   return (
-    <div className="payment-review">
+    <div className="payment-review p-4">
       <h2>Revisión de Pagos</h2>
-      
+
       <div className="payment-filters mb-4 p-3 bg-light rounded">
-        <Form.Group className="mb-3">
-          <Form.Label>Filtrar por fecha:</Form.Label>
-          <Form.Control 
-            type="date" 
-            value={filter.date}
-            onChange={(e) => setFilter({...filter, date: e.target.value})}
-          />
-        </Form.Group>
-        
-        <div className="row">
-          <div className="col-md-4">
+        <Row className="gy-3">
+          <Col md={2}>
             <Form.Group>
-              <Form.Label>Padre/Madre:</Form.Label>
-              <Form.Control 
-                type="text" 
-                placeholder="Buscar por nombre"
-                value={filter.parent}
-                onChange={(e) => setFilter({...filter, parent: e.target.value})}
-              />
-            </Form.Group>
-          </div>
-          
-          <div className="col-md-4">
-            <Form.Group>
-              <Form.Label>Estudiante:</Form.Label>
-              <Form.Control 
-                type="text" 
-                placeholder="Buscar por nombre"
-                value={filter.student}
-                onChange={(e) => setFilter({...filter, student: e.target.value})}
-              />
-            </Form.Group>
-          </div>
-          
-          <div className="col-md-4">
-            <Form.Group>
-              <Form.Label>Estado:</Form.Label>
-              <Form.Select 
-                value={filter.status}
-                onChange={(e) => setFilter({...filter, status: e.target.value})}
+              <Form.Label>Año</Form.Label>
+              <Form.Select
+                value={filter.year}
+                onChange={e => setFilter({...filter, year: e.target.value})}
               >
-                <option value="all">Todos</option>
-                <option value="approved">Aprobados</option>
-                <option value="pending">Pendientes</option>
-                <option value="rejected">Rechazados</option>
+                {years.map(y => <option key={y} value={y}>{y}</option>)}
               </Form.Select>
             </Form.Group>
-          </div>
-        </div>
+          </Col>
+
+          <Col md={2}>
+            <Form.Group>
+              <Form.Label>Mes</Form.Label>
+              <Form.Select
+                value={filter.month}
+                onChange={e => setFilter({...filter, month: e.target.value})}
+              >
+                {months.map(m => (
+                  <option key={m.val} value={m.val}>{m.name}</option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+          </Col>
+
+          <Col md={3}>
+            <Form.Group>
+              <Form.Label>Padre/Madre</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Buscar padre"
+                value={filter.parent}
+                onChange={e => setFilter({...filter, parent: e.target.value})}
+              />
+            </Form.Group>
+          </Col>
+
+          <Col md={3}>
+            <Form.Group>
+              <Form.Label>Estudiante</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Buscar estudiante"
+                value={filter.student}
+                onChange={e => setFilter({...filter, student: e.target.value})}
+              />
+            </Form.Group>
+          </Col>
+
+          <Col md={2}>
+            <Form.Group>
+              <Form.Label>Estado</Form.Label>
+              <Form.Select
+                value={filter.status}
+                onChange={e => setFilter({...filter, status: e.target.value})}
+              >
+                {statuses.map(s => (
+                  <option key={s.val} value={s.val}>{s.label}</option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+          </Col>
+        </Row>
       </div>
 
-      <Table striped bordered hover>
-        <thead>
-          <tr>
-            <th>Fecha</th>
-            <th>Padre/Madre</th>
-            <th>Estudiante</th>
-            <th>Monto</th>
-            <th>Tipo Servicio</th>
-            <th>Estado</th>
-            <th>Comprobante</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredPayments.map(payment => (
-            <tr key={payment.id}>
-              <td>{payment.date}</td>
-              <td>{payment.parent}</td>
-              <td>{payment.student}</td>
-              <td>${payment.amount}</td>
-              <td>
-                {payment.type === 'both' ? 'Ambos' : 
-                 payment.type === 'pickup' ? 'Recogida' : 'Dejada'}
-              </td>
-              <td>
-                <Badge bg={
-                  payment.status === 'approved' ? 'success' :
-                  payment.status === 'pending' ? 'warning' : 'danger'
-                }>
-                  {payment.status === 'approved' ? 'Aprobado' :
-                   payment.status === 'pending' ? 'Pendiente' : 'Rechazado'}
-                </Badge>
-              </td>
-              <td>
-                <a 
-                  href={`/uploads/${payment.file}`} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                >
-                  Ver comprobante
-                </a>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
+      {loading
+        ? <div className="text-center"><Spinner animation="border" /></div>
+        : (
+          <Table striped bordered hover responsive>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Padre/Madre</th>
+                <th>Teléfono</th>
+                <th>Estudiantes</th>
+                <th>Monto</th>
+                <th>Tipo</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {displayed.map(r => (
+                <tr key={r._id}>
+                  <td>{new Date(r.createdAt).toLocaleDateString()}</td>
+                  <td>{r.parent.name}</td>
+                  <td>{r.parent.phone}</td>
+                  <td>{r.studentNames.join(', ')}</td>
+                  <td>${r.amount}</td>
+                  <td>
+                    {r.type === 'both'   ? 'Ida y vuelta' :
+                     r.type === 'pickup' ? 'Solo ida'     :
+                     'Solo vuelta'}
+                  </td>
+                  <td>
+                    <Badge bg={
+                      r.status === 'approved' ? 'success' :
+                      r.status === 'pending'  ? 'warning' :
+                      'danger'
+                    }>
+                      { r.status === 'approved'
+                          ? 'Aprobado'
+                          : r.status === 'pending'
+                            ? 'Pendiente'
+                            : 'Rechazado'
+                      }
+                    </Badge>
+                  </td>
+                  <td>
+                    <Button size="sm">
+                      <a
+                        href={r.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: 'white', textDecoration: 'none' }}
+                      >
+                        📄 Ver
+                      </a>
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        )
+      }
     </div>
-  );
-};
+  )
+}
 
-export default PaymentReview;
+export default PaymentReview

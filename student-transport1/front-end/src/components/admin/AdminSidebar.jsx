@@ -4,7 +4,8 @@ import {
   faUsers,
   faRoute,
   faReceipt,
-  faSignOutAlt
+  faSignOutAlt,
+  faSortAmountDown
 } from '@fortawesome/free-solid-svg-icons';
 
 const AdminSidebar = ({ activeSection, setActiveSection, onLogout }) => {
@@ -34,6 +35,13 @@ const AdminSidebar = ({ activeSection, setActiveSection, onLogout }) => {
         >
           <FontAwesomeIcon icon={faReceipt} className="icon" />
           <span>Revisión de Pagos</span>
+        </button>
+        <button
+          className={`menu-item ${activeSection === 'grade' ? 'active' : ''}`}
+          onClick={() => setActiveSection('grade')}
+        >
+          <FontAwesomeIcon icon={faSortAmountDown} className="icon" />
+          <span>Orden por Grado</span>
         </button>
       </nav>
       <div className="sidebar-footer">

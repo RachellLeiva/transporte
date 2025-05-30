@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import AdminSidebar     from './AdminSidebar';
-import UserManagement   from './sections/UserManagement';
-import RouteAssignment  from './sections/RouteAssignment';
-import PaymentReview    from './sections/PaymentReview';
+import AdminSidebar from './AdminSidebar';
+import UserManagement from './sections/UserManagement';
+import RouteAssignment from './sections/RouteAssignment';
+import PaymentReview from './sections/PaymentReview';
+import GradeOrder from './sections/GradeOrder';
 import '../../styles/AdminDashboard.css';
 
 const AdminDashboard = ({ onLogout }) => {
@@ -13,6 +14,7 @@ const AdminDashboard = ({ onLogout }) => {
       case 'users':    return <UserManagement />;
       case 'routes':   return <RouteAssignment />;
       case 'payments': return <PaymentReview />;
+      case 'grade':    return <GradeOrder />;
       default:         return <UserManagement />;
     }
   };

@@ -1,46 +1,68 @@
+// src/components/admin/sections/RouteAssignment.jsx
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Badge, Form } from 'react-bootstrap';
+import { Table, Button } from 'react-bootstrap';
 import CreateRouteModal from '../modals/CreateRouteModal';
+import { api } from '../../../api';
 
 const RouteAssignment = () => {
   const [routes, setRoutes] = useState([]);
-  const [students, setStudents] = useState([]);
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [editingRoute, setEditingRoute] = useState(null);
 
+  // Carga inicial de rutas
   useEffect(() => {
-    // Datos de ejemplo
-    const mockRoutes = [
-      {
-        id: 1,
-        name: "Ruta Norte",
-        stops: [
-          { time: "07:00 AM", location: "Av. Principal 123" },
-          { time: "07:15 AM", location: "Calle Secundaria 456" }
-        ],
-        students: [
-          { id: 101, name: "María Pérez", serviceType: "both" }
-        ]
+    (async () => {
+      try {
+        const { data } = await api.get('/routes');
+        setRoutes(data);
+      } catch (err) {
+        console.error('Error cargando rutas:', err);
       }
-    ];
-    
-    const mockStudents = [
-      { id: 101, name: "María Pérez", grade: "5to", parent: "Juan Pérez", serviceType: "both" },
-      { id: 102, name: "Carlos López", grade: "3ro", parent: "Ana López", serviceType: "pickup" }
-    ];
-    
-    setRoutes(mockRoutes);
-    setStudents(mockStudents.filter(s => !mockRoutes.some(r => 
-      r.students.some(rs => rs.id === s.id)
-    )));
+    })();
   }, []);
 
+  // Crear o actualizar ruta
+  const handleSaveRoute = async (routeData) => {
+    try {
+      if (routeData._id) {
+        const { data: updated } = await api.put(`/routes/${routeData._id}`, routeData);
+        setRoutes(routes.map(r => r._id === updated._id ? updated : r));
+      } else {
+        const { data: created } = await api.post('/routes', routeData);
+        setRoutes([created, ...routes]);
+      }
+    } catch (err) {
+      console.error('Error guardando ruta:', err);
+      alert(err.response?.data?.msg || 'Error guardando ruta');
+    }
+  };
+
+  // Eliminar ruta
+  const handleDeleteRoute = async (id) => {
+    if (!window.confirm('¿Eliminar esta ruta permanentemente?')) return;
+    try {
+      await api.delete(`/routes/${id}`);
+      setRoutes(routes.filter(r => r._id !== id));
+    } catch (err) {
+      console.error('Error eliminando ruta:', err);
+      alert(err.response?.data?.msg || 'Error eliminando ruta');
+    }
+  };
+
+  const openNew = () => {
+    setEditingRoute(null);
+    setShowModal(true);
+  };
+  const openEdit = (route) => {
+    setEditingRoute(route);
+    setShowModal(true);
+  };
+
   return (
-    <div className="route-management">
+    <div className="route-management p-4">
       <div className="d-flex justify-content-between mb-4">
         <h2>Asignación de Rutas</h2>
-        <Button onClick={() => setShowCreateModal(true)}>
-          Crear Nueva Ruta
-        </Button>
+        <Button onClick={openNew}>Crear Nueva Ruta</Button>
       </div>
 
       <Table striped bordered hover>
@@ -49,64 +71,44 @@ const RouteAssignment = () => {
             <th>Nombre Ruta</th>
             <th>Paradas</th>
             <th>Estudiantes</th>
-            <th>Tipo Servicio</th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
           {routes.map(route => (
-            <tr key={route.id}>
+            <tr key={route._id}>
               <td>{route.name}</td>
               <td>
-                <ul>
+                <ul className="ps-3">
                   {route.stops.map((stop, i) => (
-                    <li key={i}>{stop.time} - {stop.location}</li>
+                    <li key={i}>
+                      {stop.time} – {stop.address}
+                    </li>
                   ))}
                 </ul>
               </td>
               <td>
-                {route.students.length > 0 ? (
-                  <ul>
-                    {route.students.map(student => (
-                      <li key={student.id}>
-                        {student.name} ({student.serviceType === 'both' ? 'Ambos' : 
-                                       student.serviceType === 'pickup' ? 'Recogida' : 'Dejada'})
-                      </li>
-                    ))}
-                  </ul>
-                ) : 'Ninguno asignado'}
+                <ul className="ps-3">
+                  {route.stops.map((stop, i) => (
+                    <li key={i}>
+                      {stop.student.name}
+                    </li>
+                  ))}
+                </ul>
               </td>
               <td>
-                {[...new Set(route.students.map(s => s.serviceType))].join(', ')}
-              </td>
-              <td>
-                <Button size="sm">Editar</Button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
-
-      <h4 className="mt-5">Estudiantes sin ruta asignada</h4>
-      <Table striped bordered hover>
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Grado</th>
-            <th>Padre/Madre</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {students.map(student => (
-            <tr key={student.id}>
-              <td>{student.name}</td>
-              <td>{student.grade}</td>
-              <td>{student.parent}</td>
-              <td>
-                <Button size="sm" variant="success">
-                  Asignar a ruta
-                </Button>
+                <div className="d-flex gap-2">
+                  <Button size="sm" onClick={() => openEdit(route)}>
+                    Editar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    onClick={() => handleDeleteRoute(route._id)}
+                  >
+                    Eliminar
+                  </Button>
+                </div>
               </td>
             </tr>
           ))}
@@ -114,11 +116,10 @@ const RouteAssignment = () => {
       </Table>
 
       <CreateRouteModal
-        show={showCreateModal}
-        onHide={() => setShowCreateModal(false)}
-        onCreate={(newRoute) => {
-          setRoutes([...routes, newRoute]);
-        }}
+        show={showModal}
+        onHide={() => setShowModal(false)}
+        onSave={handleSaveRoute}
+        route={editingRoute}
       />
     </div>
   );

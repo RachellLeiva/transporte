@@ -1,229 +1,162 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Badge, Alert } from 'react-bootstrap';
-import { api } from '../../../api'; 
 import EditUserModal from '../modals/EditUserModal';
-import AssignStudentModal from '../modals/AssignStudentModal';
 import DeleteAccountModal from '../../modals/DeleteAccountModal';
+import { api } from '../../../api';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [students, setStudents] = useState([]);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showAssignModal, setShowAssignModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [alert, setAlert] = useState({ show: false, message: '', variant: '' });
+  const [showEdit, setShowEdit] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [alert, setAlert] = useState({ show: false, message: '', variant: 'success' });
-  const [loading, setLoading] = useState(true);
 
-  // Obtener usuarios y estudiantes de la API
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [usersRes, studentsRes] = await Promise.all([
-          api.get('/users'),
-          api.get('/students')
-        ]);
-        setUsers(usersRes.data);
-        setStudents(studentsRes.data);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        setAlert({ show: true, message: 'Error al cargar los datos', variant: 'danger' });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    Promise.all([
+      api.get('/users'),
+      api.get('/students')
+    ])
+      .then(([uRes, sRes]) => {
+        setUsers(uRes.data);
+        setStudents(sRes.data);
+      })
+      .catch(err => console.error(err));
   }, []);
 
-  const handleSaveUser = async (userData) => {
-    try {
-      let response;
-      if (userData._id) {
-        // Editar usuario existente
-        response = await api.put(`/users/${userData._id}`, userData);
-        setUsers(users.map(u => u._id === userData._id ? response.data : u));
-        setAlert({ show: true, message: 'Usuario actualizado correctamente', variant: 'success' });
-      } else {
-        // Crear nuevo usuario
-        response = await api.post('/users', userData);
-        setUsers([...users, response.data]);
-        setAlert({ show: true, message: 'Usuario creado correctamente', variant: 'success' });
-      }
-      setShowEditModal(false);
-    } catch (error) {
-      console.error('Error saving user:', error);
-      setAlert({ show: true, message: 'Error al guardar el usuario', variant: 'danger' });
-    }
+  const onSaveUser = (data) => {
+    api.put(`/users/${data._id}`, data)
+      .then(res => {
+        setUsers(users.map(u => u._id === res.data._id ? res.data : u));
+        setAlert({ show: true, message: 'Usuario actualizado', variant: 'success' });
+      })
+      .catch(() => setAlert({ show: true, message: 'Error actualizando', variant: 'danger' }));
+    setShowEdit(false);
   };
 
-  const handleDeleteUser = async (userId) => {
-    try {
-      await api.delete(`/users/${userId}`);
-      setUsers(users.filter(u => u._id !== userId));
-      // También eliminar estudiantes asociados si es un padre
-      setStudents(students.filter(s => s.parentId !== userId));
-      setShowDeleteModal(false);
-      setAlert({ show: true, message: 'Usuario eliminado correctamente', variant: 'danger' });
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      setAlert({ show: true, message: 'Error al eliminar el usuario', variant: 'danger' });
-    }
+  const onDeleteUser = (id) => {
+    api.delete(`/users/${id}`)
+      .then(() => {
+        setUsers(users.filter(u => u._id !== id));
+        setAlert({ show: true, message: 'Usuario eliminado', variant: 'danger' });
+      })
+      .catch(() => setAlert({ show: true, message: 'Error eliminando', variant: 'danger' }));
+    setShowDelete(false);
   };
 
-  const handleAssignStudent = async (studentData) => {
-    try {
-      let response;
-      if (studentData._id) {
-        // Editar estudiante existente
-        response = await api.put(`/students/${studentData._id}`, studentData);
-        setStudents(students.map(s => s._id === studentData._id ? response.data : s));
-      } else {
-        // Crear nuevo estudiante
-        response = await api.post('/students', studentData);
-        setStudents([...students, response.data]);
-      }
-      setShowAssignModal(false);
-      setAlert({ show: true, message: 'Estudiante asignado/actualizado', variant: 'success' });
-    } catch (error) {
-      console.error('Error assigning student:', error);
-      setAlert({ show: true, message: 'Error al asignar estudiante', variant: 'danger' });
-    }
-  };
-
-  const getUserStudents = (userId) => {
-    return students.filter(s => s.parentId === userId);
-  };
-
-  if (loading) return <div>Cargando...</div>;
+  // Ordena: padres primero, luego cualquier otro rol
+  const sortedUsers = [...users].sort((a, b) => {
+    if (a.role === 'parent' && b.role !== 'parent') return -1;
+    if (a.role !== 'parent' && b.role === 'parent') return 1;
+    return 0;
+  });
 
   return (
     <div className="user-management">
       <h2>Gestión de Usuarios</h2>
-      
       {alert.show && (
-        <Alert 
-          variant={alert.variant} 
-          onClose={() => setAlert({...alert, show: false})} 
+        <Alert
+          variant={alert.variant}
           dismissible
+          onClose={() => setAlert(a => ({ ...a, show: false }))}
           className="mt-3"
         >
           {alert.message}
         </Alert>
       )}
 
-      <div className="d-flex justify-content-between mb-3">
-        <Button 
-          variant="primary" 
-          onClick={() => {
-            setSelectedUser(null);
-            setShowEditModal(true);
-          }}
-        >
-          Agregar Usuario
-        </Button>
-      </div>
-
       <Table striped bordered hover className="mt-3">
         <thead>
           <tr>
             <th>Nombre</th>
-            <th>Email</th>
-            <th>Rol</th>
             <th>Teléfono</th>
+            <th>Dirección</th>
             <th>Estudiantes</th>
+            <th>Rol</th>
+            <th>Servicio</th>
+            <th>Monto</th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
-          {users.map(user => (
-            <React.Fragment key={user._id}>
-              <tr>
-                <td>{user.name}</td>
-                <td>{user.email}</td>
+          {sortedUsers.map(u => {
+            const isParent = u.role === 'parent';
+            const kids = isParent
+              ? students.filter(s => s.parent === u._id)
+              : [];
+
+            return (
+              <tr key={u._id}>
+                <td>{u.name}</td>
+                <td>{u.phone || '—'}</td>
+
                 <td>
-                  <Badge bg={user.role === 'admin' ? 'primary' : 'success'}>
-                    {user.role === 'admin' ? 'Administrador' : 'Padre/Madre'}
+                  {isParent && kids.length > 0
+                    ? kids.map(s => s.address || '—').join(', ')
+                    : ''}
+                </td>
+
+                <td>
+                  {isParent && kids.length > 0
+                    ? kids.map(s => `${s.name} (${s.grade})`).join(', ')
+                    : ''}
+                </td>
+
+                <td>
+                  <Badge bg={
+                    u.role === 'admin'   ? 'primary' :
+                    u.role === 'finance' ? 'warning' :
+                    'success'
+                  }>
+                    { u.role === 'admin'   ? 'Administrador' :
+                      u.role === 'finance' ? 'Finanzas' :
+                      'Padre' }
                   </Badge>
                 </td>
-                <td>{user.phone || 'No especificado'}</td>
-                <td>
-                  {getUserStudents(user._id).length > 0 ? (
-                    <ul>
-                      {getUserStudents(user._id).map(student => (
-                        <li key={student._id}>
-                          {student.name} ({student.grade})
-                        </li>
-                      ))}
-                    </ul>
-                  ) : 'Sin estudiantes'}
+
+                <td>{isParent ? ({
+                  both: 'Ida y Vuelta',
+                  pickup: 'Solo Ida',
+                  dropoff: 'Solo Vuelta'
+                }[u.serviceType] || '—') : ''}</td>
+
+                <td>{isParent && typeof u.amount === 'number'
+                  ? `$${u.amount.toFixed(2)}` : ''}
                 </td>
+
                 <td>
                   <div className="d-flex gap-2">
-                    <Button 
-                      variant="info" 
-                      size="sm" 
-                      onClick={() => {
-                        setSelectedUser(user);
-                        setShowEditModal(true);
-                      }}
+                    <Button
+                      variant="info" size="sm"
+                      onClick={() => { setSelectedUser(u); setShowEdit(true); }}
                     >
                       Editar
                     </Button>
-                    {user.role === 'parent' && (
-                      <Button 
-                        variant="warning" 
-                        size="sm" 
-                        onClick={() => {
-                          setSelectedUser(user);
-                          setShowAssignModal(true);
-                        }}
-                      >
-                        {getUserStudents(user._id).length > 0 ? 'Administrar' : 'Asignar'} Estudiante
-                      </Button>
-                    )}
-                    <Button 
-                      variant="danger" 
-                      size="sm" 
-                      onClick={() => {
-                        setSelectedUser(user);
-                        setShowDeleteModal(true);
-                      }}
+                    <Button
+                      variant="danger" size="sm"
+                      onClick={() => { setSelectedUser(u); setShowDelete(true); }}
                     >
                       Eliminar
                     </Button>
                   </div>
                 </td>
               </tr>
-            </React.Fragment>
-          ))}
+            );
+          })}
         </tbody>
       </Table>
 
-      {/* Modales */}
       <EditUserModal
-        show={showEditModal}
-        onHide={() => setShowEditModal(false)}
+        show={showEdit}
+        onHide={() => setShowEdit(false)}
         user={selectedUser}
-        onSave={handleSaveUser}
+        onSave={onSaveUser}
       />
-
-      <AssignStudentModal
-        show={showAssignModal}
-        onHide={() => setShowAssignModal(false)}
-        parent={selectedUser}
-        students={getUserStudents(selectedUser?._id)}
-        onSave={handleAssignStudent}
-      />
-
       <DeleteAccountModal
-        show={showDeleteModal}
-        onHide={() => setShowDeleteModal(false)}
-        onDelete={() => handleDeleteUser(selectedUser._id)}
+        show={showDelete}
+        onHide={() => setShowDelete(false)}
+        onConfirm={() => onDeleteUser(selectedUser._id)}
         userType={selectedUser?.role === 'parent' ? 'parent' : 'admin'}
-        additionalWarning={selectedUser?.role === 'parent' && getUserStudents(selectedUser._id).length > 0 
-          ? 'Esto afectará a los estudiantes asociados.' 
-          : ''}
       />
     </div>
   );
