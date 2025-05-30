@@ -1,8 +1,8 @@
+// src/components/finance/sections/PaymentReview.jsx
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Badge, Form } from 'react-bootstrap';
 import { api } from '../../../api';
-import ReceiptDetails      from './ReceiptDetails';
-import ReceiptCommentModal from '../modals/ReceiptCommentModal';
+import ReceiptDetails from './ReceiptDetails';
 
 const months = [
   'Enero','Febrero','Marzo','Abril','Mayo','Junio',
@@ -14,7 +14,7 @@ export default function PaymentReview() {
   const [studentMap, setStudentMap]     = useState({});
   const [receipts, setReceipts]         = useState([]);
   const [year, setYear]                 = useState(new Date().getFullYear());
-  const [month, setMonth]               = useState('all');
+  const [month, setMonth]               = useState(new Date().getMonth() + 1);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
   const [showDetails, setShowDetails]   = useState(false);
 
@@ -46,7 +46,7 @@ export default function PaymentReview() {
   const handleStatus = async (id, status) => {
     try {
       const { data: updated } = await api.put(`/receipts/${id}/status`, { status });
-      setReceipts(rs => rs.map(r => r._id===id ? updated : r));
+      setReceipts(rs => rs.map(r => r._id === id ? updated : r));
     } catch (err) {
       console.error('Error actualizando estado:', err);
     }
@@ -58,12 +58,11 @@ export default function PaymentReview() {
         <h2>Revisión Mensual por Padre</h2>
         <div className="d-flex gap-2">
           <Form.Select value={year} onChange={e => setYear(+e.target.value)}>
-            {[2025,2024,2023].map(y => <option key={y}>{y}</option>)}
+            {[2025, 2024, 2023].map(y => <option key={y} value={y}>{y}</option>)}
           </Form.Select>
-          <Form.Select value={month} onChange={e => setMonth(e.target.value)}>
-            <option value="all">Todos</option>
-            {months.map((m,i)=>(
-              <option key={i} value={i+1}>{m}</option>
+          <Form.Select value={month} onChange={e => setMonth(+e.target.value)}>
+            {months.map((m, i) => (
+              <option key={i} value={i + 1}>{m}</option>
             ))}
           </Form.Select>
         </div>
@@ -83,30 +82,25 @@ export default function PaymentReview() {
         <tbody>
           {parents.map(p => {
             const rec = receipts.find(r =>
-              r.parent._id===p._id &&
-              (month==='all' || r.month===+month)
+              r.parent._id === p._id && r.month === month
             );
             return (
               <tr key={p._id}>
                 <td>{p.name}</td>
-                <td>{p.phone||'—'}</td>
-                <td>{(studentMap[p._id]||[]).join(', ')||'—'}</td>
-                <td>
-                  {month==='all'
-                    ? 'Todos'
-                    : `${months[month-1]} ${year}`}
-                </td>
+                <td>{p.phone || '—'}</td>
+                <td>{(studentMap[p._id] || []).join(', ') || '—'}</td>
+                <td>{`${months[month - 1]} ${year}`}</td>
                 <td>
                   {rec
-                    ? rec.status==='approved' ? 'Aprobado'
-                      : rec.status==='pending'  ? 'Pendiente'
+                    ? rec.status === 'approved' ? 'Aprobado'
+                      : rec.status === 'pending'  ? 'Pendiente'
                       : 'Rechazado'
                     : 'No hay'}
                 </td>
                 <td className="d-flex gap-2">
                   {rec ? (
                     <>
-                      <Button size="sm" onClick={()=>{
+                      <Button size="sm" onClick={() => {
                         setSelectedReceipt(rec);
                         setShowDetails(true);
                       }}>
@@ -115,16 +109,16 @@ export default function PaymentReview() {
                       <Button
                         size="sm"
                         variant="success"
-                        disabled={rec.status==='approved'}
-                        onClick={() => handleStatus(rec._id,'approved')}
+                        disabled={rec.status === 'approved'}
+                        onClick={() => handleStatus(rec._id, 'approved')}
                       >
                         Aprobar
                       </Button>
                       <Button
                         size="sm"
                         variant="danger"
-                        disabled={rec.status==='rejected'}
-                        onClick={() => handleStatus(rec._id,'rejected')}
+                        disabled={rec.status === 'rejected'}
+                        onClick={() => handleStatus(rec._id, 'rejected')}
                       >
                         Rechazar
                       </Button>
@@ -144,8 +138,6 @@ export default function PaymentReview() {
         onHide={() => setShowDetails(false)}
         receipt={selectedReceipt}
       />
-
-      {/* no usamos aquí ReceiptCommentModal; la acción de “Rechazar” ya lo marca */}
     </div>
   );
 }
