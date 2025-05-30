@@ -1,4 +1,3 @@
-// front-end/src/components/finance/FinanceDashboard.jsx
 import React, { useState } from 'react';
 import FinanceSidebar  from './FinanceSidebar';
 import PaymentReview   from './sections/PaymentReview';

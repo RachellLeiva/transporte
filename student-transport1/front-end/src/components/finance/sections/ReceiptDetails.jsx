@@ -1,27 +1,39 @@
-// front-end/src/components/finance/sections/ReceiptDetails.jsx
 import React from 'react';
 import { Modal, Button, Image } from 'react-bootstrap';
 
-const ReceiptDetails = ({ show, onHide, receipt }) => {
+export default function ReceiptDetails({ show, onHide, receipt }) {
+  if (!receipt) return null;
+
+  const {
+    parent: { name, phone },
+    studentNames = [],
+    amount,
+    createdAt,
+    fileUrl,
+    comment
+  } = receipt;
+
+  const dateStr = new Date(createdAt).toLocaleDateString();
+
   return (
     <Modal show={show} onHide={onHide} size="lg" centered>
       <Modal.Header closeButton>
-        <Modal.Title>Detalles del Comprobante #{receipt?._id}</Modal.Title>
+        <Modal.Title>Detalles del Comprobante</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        {receipt && (
-          <>
-            <p><strong>Padre/Madre:</strong> {receipt.parentName}</p>
-            <p><strong>Estudiante:</strong> {receipt.studentName}</p>
-            <p><strong>Monto:</strong> ${receipt.amount.toFixed(2)}</p>
-            <p><strong>Fecha:</strong> {new Date(receipt.date).toISOString().split('T')[0]}</p>
-            <Image src={receipt.imageUrl} fluid thumbnail className="mb-3" />
-            {receipt.comment && (
-              <div className="alert alert-info">
-                <strong>Comentario:</strong> {receipt.comment}
-              </div>
-            )}
-          </>
+        <p><strong>Padre/Madre:</strong> {name}</p>
+        <p><strong>Teléfono:</strong> {phone}</p>
+        <p><strong>Estudiante(s):</strong> {studentNames.join(', ')}</p>
+        <p><strong>Monto:</strong> ${amount}</p>
+        <p><strong>Fecha subida:</strong> {dateStr}</p>
+        <div className="mb-3">
+          <h5>Comprobante:</h5>
+          <Image src={fileUrl} fluid thumbnail />
+        </div>
+        {comment && (
+          <div className="alert alert-info">
+            <strong>Comentario:</strong> {comment}
+          </div>
         )}
       </Modal.Body>
       <Modal.Footer>
@@ -29,6 +41,4 @@ const ReceiptDetails = ({ show, onHide, receipt }) => {
       </Modal.Footer>
     </Modal>
   );
-};
-
-export default ReceiptDetails;
+}

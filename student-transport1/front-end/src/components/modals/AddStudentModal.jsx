@@ -1,30 +1,81 @@
+/* src/components/modals/AddStudentModal.jsx */
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
 
+const gradeMap = {
+  preescolar: ['Materno', 'Kinder'],
+  primaria: ['1°', '2°', '3°', '4°', '5°', '6°'],
+  secundaria: ['7°', '8°', '9°', '10°', '11°']
+};
+
 const AddStudentModal = ({ show, onHide, onSave }) => {
-  const [form, setForm] = useState({ name:'', grade:'', address:'' });
+  const [name, setName] = useState('');
+  const [level, setLevel] = useState('primaria');
+  const [gradeOptions, setGradeOptions] = useState(gradeMap['primaria']);
+  const [grade, setGrade] = useState(gradeMap['primaria'][0]);
+  const [address, setAddress] = useState('');
 
-  useEffect(() => { if (!show) setForm({ name:'', grade:'', address:'' }); }, [show]);
+  useEffect(() => {
+    const opts = gradeMap[level];
+    setGradeOptions(opts);
+    setGrade(opts[0]);
+  }, [level]);
 
-  const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
-  const handleSubmit = () => { onSave(form); onHide(); };
+  const handleSubmit = () => {
+    onSave({ name, level, grade, address });
+    onHide();
+    // reset for next time
+    setName('');
+    setLevel('primaria');
+    setAddress('');
+  };
 
   return (
     <Modal show={show} onHide={onHide} centered>
-      <Modal.Header closeButton><Modal.Title>Agregar estudiante</Modal.Title></Modal.Header>
+      <Modal.Header closeButton>
+        <Modal.Title>Agregar estudiante</Modal.Title>
+      </Modal.Header>
       <Modal.Body>
         <Form>
           <Form.Group className="mb-3">
-            <Form.Label>Nombre</Form.Label>
-            <Form.Control type="text" name="name" value={form.name} onChange={handleChange} required />
+            <Form.Label>Nombre completo</Form.Label>
+            <Form.Control
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              required
+            />
+          </Form.Group>
+          <Form.Group className="mb-3">
+            <Form.Label>Nivel educativo</Form.Label>
+            <Form.Select
+              value={level}
+              onChange={e => setLevel(e.target.value)}
+            >
+              <option value="preescolar">Preescolar</option>
+              <option value="primaria">Primaria</option>
+              <option value="secundaria">Secundaria</option>
+            </Form.Select>
           </Form.Group>
           <Form.Group className="mb-3">
             <Form.Label>Grado</Form.Label>
-            <Form.Control type="text" name="grade" value={form.grade} onChange={handleChange} required />
+            <Form.Select
+              value={grade}
+              onChange={e => setGrade(e.target.value)}
+            >
+              {gradeOptions.map(g => (
+                <option key={g} value={g}>{g}</option>
+              ))}
+            </Form.Select>
           </Form.Group>
           <Form.Group className="mb-3">
             <Form.Label>Dirección</Form.Label>
-            <Form.Control type="text" name="address" value={form.address} onChange={handleChange} required />
+            <Form.Control
+              type="text"
+              value={address}
+              onChange={e => setAddress(e.target.value)}
+              required
+            />
           </Form.Group>
         </Form>
       </Modal.Body>

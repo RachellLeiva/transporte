@@ -1,4 +1,3 @@
-// front-end/src/components/finance/modals/ReceiptCommentModal.jsx
 import React, { useState } from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
 

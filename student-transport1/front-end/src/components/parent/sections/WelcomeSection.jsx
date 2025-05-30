@@ -1,5 +1,5 @@
 import React from 'react';
-import Tarjeta from '../../../Tarjeta.png';
+import Tarjeta from '../../../logoMautick.jpg';
 
 const WelcomeSection = () => (
   <div className="welcome-section">
